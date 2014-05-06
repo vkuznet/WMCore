@@ -75,14 +75,17 @@ def installWorkQueueCouchApp(couchUrl, couchDBName):
 
 def createCronEntires(crontabLines):
     tempDir = tempfile.mkdtemp()
-    os.system("crontab -l > %s/crontab" % tempDir)
-    cronTab = open("%s/crontab" % tempDir, "a")
-    [cronTab.write(line) for line in crontabLines]
-    cronTab.close()
-    os.system("crontab %s/crontab" % tempDir)
-    os.remove("%s/crontab" % tempDir)
+    cname = '%s/crontab' % tempDir
+    os.system("crontab -l > %s" % cname)
+    entries = [l.replace('\n', '').strip() for l in open(cname, 'r').readlines()]
+    with open(cname, 'a') as astream:
+        for line in crontabLines:
+            line = line.strip()
+            if  line not in entries:
+                astream.write(line + '\n')
+    os.system("crontab %s" % cname)
+    os.remove(cname)
     os.rmdir(tempDir)
-
 
 def setupCron(couchUrl, couchDBName):
     """
@@ -107,10 +110,10 @@ def setupCron(couchUrl, couchDBName):
     compactCmd = "echo %s | sed -e 's|\\\\||g' | xargs curl -s -H 'Content-Type: application/json' -X POST > /dev/null"
 
     crontabLines = []
-    crontabLines.append("* * * * * %s\n" % (indexCmd % indexJobsUrl))
-    crontabLines.append("* * * * * %s\n" % (indexCmd % indexFwjrUrl))
-    crontabLines.append("0 0 * * * %s\n" % (compactCmd % compactViewUrl))
-    crontabLines.append("0 0 * * * %s\n" % (compactCmd % compactDBUrl))
+    crontabLines.append("* * * * * %s" % (indexCmd % indexJobsUrl))
+    crontabLines.append("* * * * * %s" % (indexCmd % indexFwjrUrl))
+    crontabLines.append("0 0 * * * %s" % (compactCmd % compactViewUrl))
+    crontabLines.append("0 0 * * * %s" % (compactCmd % compactDBUrl))
     createCronEntires(crontabLines)
 
 
@@ -118,17 +121,8 @@ def setupCronCompaction(couchUrl, couchDbName):
     """Add a simple couch compaction"""
     compactUrl = "%s/%s/_compact" % (couchUrl, couchDbName)
     compactCmd = "curl -s -H 'Content-Type: application/json' -X POST '%s' > /dev/null"
-
-    tempDir = tempfile.mkdtemp()
-    os.system("crontab -l > %s/crontab" % tempDir)
-    cronTab = open("%s/crontab" % tempDir, "a")
-    cronTab.write("0 1 * * * %s\n" % (compactCmd % compactUrl))
-    cronTab.close()
-
-    os.system("crontab %s/crontab" % tempDir)
-    os.remove("%s/crontab" % tempDir)
-    os.rmdir(tempDir)
-
+    cronLine = "0 1 * * * %s" % (compactCmd % compactUrl)
+    createCronEntries([cronLine])
 
 files_needed_from_yui = [
 'build/animation/animation-min.js',
@@ -293,9 +287,11 @@ if __name__ == "__main__":
     if hasattr(wmagentConfig, "JobStateMachine") and hasattr(wmagentConfig.JobStateMachine, "couchDBName"):
         fwjrDumpName = urllib.quote_plus("%s/fwjrs" % wmagentConfig.JobStateMachine.couchDBName)
         jobDumpName = urllib.quote_plus("%s/jobs" % wmagentConfig.JobStateMachine.couchDBName)
+        summaryDBName = "wma_summarydb"
         installCouchApp(wmagentConfig.JobStateMachine.couchurl, fwjrDumpName, "FWJRDump")
         installCouchApp(wmagentConfig.JobStateMachine.couchurl, jobDumpName, "JobDump")
         installCouchApp(wmagentConfig.JobStateMachine.couchurl, wmagentConfig.JobStateMachine.jobSummaryDBName, "WMStats")
+        installCouchApp(wmagentConfig.JobStateMachine.couchurl, summaryDBName, "SummaryStats")
         if options.cron:
             setupCron(wmagentConfig.JobStateMachine.couchurl,
                       wmagentConfig.JobStateMachine.couchDBName)

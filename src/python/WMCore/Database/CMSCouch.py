@@ -866,6 +866,10 @@ class CouchServer(CouchDBRequests):
                 check_name(destination)
             else:
                 check_server_url(destination)
+        if not destination.startswith("http"):
+            destination = '%s/%s' % (self.url, destination)
+        if not source.startswith("http"):
+            source = '%s/%s' % (self.url, source)
         data={"source":source,"target":destination}
         #There must be a nicer way to do this, but I've not had coffee yet...
         if continuous: data["continuous"] = continuous

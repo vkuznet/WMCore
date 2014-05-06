@@ -17,6 +17,7 @@ from WMCore.JobStateMachine.Transitions import Transitions
 from WMCore.Services.Dashboard.DashboardReporter import DashboardReporter
 from WMCore.WMConnectionBase import WMConnectionBase
 from WMCore.Lexicon import sanitizeURL
+from WMCore.JobStateMachine.SummaryDB import updateSummaryDB
 
 CMSSTEP = re.compile(r'^cmsRun[0-9]+$')
 
@@ -306,6 +307,7 @@ class ChangeState(WMObject, WMConnectionBase):
                                 "fwjr": job["fwjr"].__to_json__(None),
                                 "type": "fwjr"}
                 self.fwjrdatabase.queue(fwjrDocument, timestamp = True, callback = discardConflictingDocument)
+                updateSummaryDB(self.couchdb, job)
 
                 #TODO: can add config switch to swich on and off
                 # if self.config.JobSateMachine.propagateSuccessJobs or (job["retry_count"] > 0) or (newstate != 'success'):
