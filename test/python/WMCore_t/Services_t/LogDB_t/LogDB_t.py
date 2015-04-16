@@ -175,5 +175,16 @@ class LogDBTest(unittest.TestCase):
         args = ('', 'info') # empty request string
         self.assertRaises(LogDBError, self.localdb.backend.check, *args)
 
+    def test_report(self):
+        "Test LogDB report API"
+        request = 'abc'
+        self.localdb2.post(request, 'msg1', 'info') # doc with different thread name
+        self.localdb.post(request, 'msg1', 'info')
+        self.localdb.post(request, 'msg2', 'info')
+        self.localdb.post(request, 'msg3', 'warning')
+        self.localdb.post(request, 'msg4', 'error')
+        report = self.localdb.report(request, print_report=True)
+        self.assertEqual(report, None)
+
 if __name__ == "__main__":
     unittest.main()

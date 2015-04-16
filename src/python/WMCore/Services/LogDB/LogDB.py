@@ -138,3 +138,41 @@ class LogDB(object):
         except Exception as exc:
             self.logger.error('LogDBBackend cleanup API failed, backend=%s, error=%s' \
                     % (backend, str(exc)))
+
+    def report(self, request, print_report=False):
+        """Provide human readable report for given request"""
+        data = self.summary(request)
+        if  not isinstance(data, list):
+            msg = "There is no data available with request: '%s'" % request
+            msg += 'Collected summary: %s' % data
+            return msg
+        odict = {}
+        for item in data:
+            odict[item['ts']] = item
+        keys = sorted(odict.keys())
+        keys.reverse()
+        times = []
+        messages = []
+        mtypes = []
+        for key in keys:
+            val = odict[key]
+            times.append(str(key))
+            messages.append(val['msg'])
+            mtypes.append(val['type'])
+        tstpad = max([len(t) for t in times])
+        msgpad = max([len(m) for m in messages])
+        mtppad = max([len(m) for m in mtypes])
+        out = []
+        if  print_report:
+            msg = 'Report for %s' % request
+            print msg, '\n', '-'*len(msg)
+        for idx in range(len(times)):
+            tcol = '%s%s' % (times[idx], ' '*(tstpad-len(times[idx])))
+            mcol = '%s%s' % (messages[idx], ' '*(msgpad-len(messages[idx])))
+            ecol = '%s%s' % (mtypes[idx], ' '*(mtppad-len(mtypes[idx])))
+            if  print_report:
+                print "%s %s %s" % (tcol, mcol, ecol)
+            else:
+                out.append((tcol, mcol, ecol))
+        if  not print_report:
+            return out
