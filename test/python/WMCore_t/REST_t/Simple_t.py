@@ -8,7 +8,6 @@ from multiprocessing import Process
 from WMCore.REST.Test import setup_test_server, fake_authz_headers
 from WMCore.REST.Test import fake_authz_key_file
 from WMCore.REST.Tools import tools
-import WMCore.REST.Test as T
 
 FAKE_FILE = fake_authz_key_file()
 PORT = 8888
@@ -35,8 +34,8 @@ class SimpleTest(webtest.WebCase):
         self.proc = load_server()
 
     def tearDown(self):
-        self.proc.terminate()
         cherrypy.engine.exit()
+        self.proc.terminate()
 
     def test_basic_fail(self):
         self.getPage("/test")
@@ -62,7 +61,7 @@ def setup_server():
 
 def load_server():
     setup_server()
-    proc = Process(target=start_server, name="cherrypy_test_server")
+    proc = Process(target=start_server, name="cherrypy_Simple_t")
     proc.start()
     proc.join(timeout=1)
     return proc
