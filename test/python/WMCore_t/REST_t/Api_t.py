@@ -75,11 +75,11 @@ class Tester(webtest.WebCase):
     def setUp(self):
         self.h = fake_authz_headers(FAKE_FILE.data)
         webtest.WebCase.PORT = PORT
-        self.proc = load_server()
+        self.engine = cherrypy.engine
+        self.proc = load_server(self.engine)
 
     def tearDown(self):
-        self.proc.terminate()
-        cherrypy.engine.exit()
+        stop_server(self.proc, self.engine)
 
     def _test_accept_ok(self, fmt, page = "/test/simple", inbody = None):
         h = self.h + [("Accept", fmt)]
@@ -246,18 +246,23 @@ def setup_server():
     srcfile = __file__.split("/")[-1].split(".py")[0]
     setup_test_server(srcfile, "Root", authz_key_file=FAKE_FILE, port=PORT)
 
-def load_server():
+def load_server(engine):
     setup_server()
-    proc = Process(target=start_server, name="cherrypy_test_server")
+    proc = Process(target=start_server, name="cherrypy_Api_t", args=(engine,))
     proc.start()
     proc.join(timeout=1)
     return proc
 
-def start_server():
+def start_server(engine):
     webtest.WebCase.PORT = PORT
     cherrypy.log.screen = True
-    cherrypy.engine.start()
-    cherrypy.engine.block()
+    engine.start()
+    engine.block()
+
+def stop_server(proc, engine):
+    cherrypy.log.screen = True
+    engine.stop()
+    proc.terminate()
 
 if __name__ == '__main__':
     webtest.main()

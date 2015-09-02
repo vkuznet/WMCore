@@ -97,8 +97,8 @@ class TaskTest(webtest.WebCase):
         self.proc = load_server()
 
     def tearDown(self):
-        self.proc.terminate()
         cherrypy.engine.exit()
+        self.proc.terminate()
 
     def test(self):
         h = self.h
@@ -114,7 +114,7 @@ def setup_server():
 
 def load_server():
     setup_server()
-    proc = Process(target=start_server, name="cherrypy_test_server")
+    proc = Process(target=start_server, name="cherrypy_Daemon_t")
     proc.start()
     proc.join(timeout=1)
     return proc
