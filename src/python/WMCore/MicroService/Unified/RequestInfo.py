@@ -342,73 +342,55 @@ def getSiteWhiteList(svc, request, siteInfo, reqSpecs=None, pickone=False, verbo
         allowedSites = list(set(allowedSites) & set(memAllowed))
     return lheinput, list(primary), list(parent), list(secondary), list(sorted(allowedSites))
 
-def requestsInfo(svc, req_status, logger=None, verbose=False):
+def requestsInfo(requestRecords, svc, logger=None, verbose=False):
     """
     Helper function to get information about all requests
     """
     requestsToProcess = {} # we return a dict of requests to process
-    if not logger:
-        logger = logging.getLogger('reqmgr2ms:transferor')
-        logging.basicConfig()
-    if verbose:
-        logger.setLevel(logging.DEBUG)
 
-    # get requests from ReqMgr2 data-service for given statue
-    requestSpecs = svc.reqmgr.getRequestByStatus([req_status], detail=True)
-    requests = [r for item in requestSpecs for r in item.keys()]
-    logger.debug('### transferor found %s requests in %s state' % (len(requests), req_status))
-
-    # nothing to do
-    if not requests:
-        return requestsToProcess
- 
     # get campaigns for all requests which will be used to decide
     # how many replicas have to be made and where data has to be subscribed to
-    cdict = {}
-    for request in requests:
-        for wflow in getWorkflow(request):
-            #logger.debug("request: %s, workflow %s" % (request, wflow))
-            campaign = wflow[request]['Campaign']
-            logger.debug("request: %s, campaign: %s" % (request, campaign))
+    for rec in requestRecords:
+        reqName = rec['name']
+        for wflow in getWorkflow(reqName):
+            #logger.debug("request: %s, workflow %s" % (reqName, wflow))
+            campaign = wflow[reqName]['Campaign']
+            logger.debug("request: %s, campaign: %s" % (reqName, campaign))
             campaignConfig = svc.reqmgrAux.getCampaignConfig(campaign)
-            logger.debug("request: %s, campaignConfig: %s" % (request, campaignConfig))
+            logger.debug("request: %s, campaignConfig: %s" % (reqName, campaignConfig))
             if not campaignConfig:
                 # we skip and create alert
                 msg = 'No campagin configuration found for %s' \
-                    % request
+                    % reqName
                 msg += ', skip transferor step ...'
                 logger.warn(msg)
                 continue
-            cdict.setdefault(request, []).append(campaignConfig)
+            rec.setdefault('campaign', []).append(campaignConfig)
 
     # get list of request to process based on found campaigns
     # TMP: we comment this out since there is no campaign configuration yet
     # requests = cdict.keys()
     logger.debug("### campaign dict: %s requests" % len(cdict.keys()))
-    logger.debug("### receive %s requestSpecs" % len(requests))
-    requestsToProcess = unified(requestSpecs, cdict, logger)
-    logger.debug("### process %s requests" % len(requests))
+    logger.debug("### receive %s requestSpecs" % len(requestRecords))
+    requestsToProcess = unified(requestRecords, logger)
+    logger.debug("### process %s requests" % len(requestRecords))
     return requestsToProcess
 
-def unified(requestSpecs, campaigns, logger):
+def unified(requestRecords, logger):
     """
     Unified Transferror box
 
     Input parameters:
-    :param requestSpecs: list of request specs
-    :param campaigns: campaign configurations
+    :param requestRecords: list of request specs
+    :param logger: logger
     """
     # get aux info for dataset/blocks from inputs/parents/pileups
     # make subscriptions based on site white/black lists
 
-    # TMP: so far we make it simple, i.e. we return dicts for request names
-    if len(requestSpecs):
-        return requestSpecs
-    requestsToProcess = {}
-    for name, campaign in campaigns.items():
-        if name in requestSpecs:
-            requestsToProcess[name] = requestSpecs[name]
-    return requestsToProcess
+    # TMP: so far we make it simple, will return given requestRecords
+    if len(requestRecords):
+        return requestRecords
+    return []
 
 def requestsInfo_old(svc, state='acquired', requests=None, logger=None, verbose=False):
     if not logger:
