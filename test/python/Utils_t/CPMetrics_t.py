@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """
-Unittests for Utilities functions
+Unittests for CPMetrics functions
 """
 
 from __future__ import division, print_function
 
-import os
 import unittest
 
 from Utils.CPMetrics import flattenStats, promMetrics
@@ -20,7 +19,7 @@ class CPMetricsTests(unittest.TestCase):
         setup data to test
         """
         self.testData = {
-	    "Cheroot HTTPServer 4388603856": {"a":1},
+            "Cheroot HTTPServer 4388603856": {"a":1},
             "CherryPy Applications": {"Bytes Read/Request": 0.0}
         }
         return

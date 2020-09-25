@@ -14,32 +14,32 @@ Below we present three different outputs:
 
 {
     "Cheroot HTTPServer 4388603856": {
-        "Accepts": 0,
-        "Accepts/sec": 0.0,
-        "Bind Address": "('127.0.0.1', 8080)",
-        "Bytes Read": -1,
-        "Bytes Written": -1,
-        "Enabled": false,
-        "Queue": 0,
-        "Read Throughput": -1,
-        "Requests": -1,
-        "Run time": -1,
-        "Socket Errors": 0,
-        "Threads": 20,
-        "Threads Idle": 19,
-        "Work Time": -1,
-        "Worker Threads": {
-            "CP Server Thread-10": {
-                "Bytes Read": 0,
-                "Bytes Written": 0,
-                "Read Throughput": 0.0,
-                "Requests": 0,
-                "Work Time": 0,
-                "Write Throughput": 0.0
-            },
-            .....
+    "Accepts": 0,
+    "Accepts/sec": 0.0,
+    "Bind Address": "('127.0.0.1', 8080)",
+    "Bytes Read": -1,
+    "Bytes Written": -1,
+    "Enabled": false,
+    "Queue": 0,
+    "Read Throughput": -1,
+    "Requests": -1,
+    "Run time": -1,
+    "Socket Errors": 0,
+    "Threads": 20,
+    "Threads Idle": 19,
+    "Work Time": -1,
+    "Worker Threads": {
+        "CP Server Thread-10": {
+        "Bytes Read": 0,
+        "Bytes Written": 0,
+        "Read Throughput": 0.0,
+        "Requests": 0,
+        "Work Time": 0,
+        "Write Throughput": 0.0
         },
-        "Write Throughput": -1
+        .....
+    },
+    "Write Throughput": -1
     },
     "CherryPy Applications": {
         "Bytes Read/Request": 0.0,
@@ -208,8 +208,7 @@ def promMetrics(exporter_name):
         'cherrypy_http_server_bind_address',
         'cherrypy_app_requests',
         'cherrypy_app_server_version',
-        'cherrypy_http_server_enabled'
-    ]
+        'cherrypy_http_server_enabled']
     # our prometheus data representation
     pdata = ""
     for key, val in metrics.iteritems():
@@ -246,35 +245,35 @@ def flattenStats(cpdata):
     if isinstance(cpdata, str):
         cpdata = json.loads(cpdata)
     data = {}
-    for key, val in cpdata.iteritems():
-        if key.lower().find('cherrypy') != -1:
-            for kkk, vvv in val.iteritems():
-                nkey = 'cherrypy_app_%s' % kkk
+    for cpKey, cpVal in cpdata.iteritems():
+        if cpKey.lower().find('cherrypy') != -1:
+            for cpnKey, cpnVal in cpVal.iteritems():
+                nkey = 'cherrypy_app_%s' % cpnKey
                 nkey = nkey.lower().replace(" ", "_").replace("/", "_")
-                data[nkey] = vvv
-        if key.lower().find('cheroot') != -1:
-            for kkk, vvv in val.iteritems():
-                if kkk == 'Worker Threads':
+                data[nkey] = cpnVal
+        if cpKey.lower().find('cheroot') != -1:
+            for cpnKey, cpnVal in cpVal.iteritems():
+                if cpnKey == 'Worker Threads':
                     wdata = []
-                    for wkey, tval in vvv.iteritems():
-                        wkey = wkey.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
-                        tval['thread_name'] = wkey
+                    for workerKey, threadValue in cpnVal.iteritems():
+                        workerKey = workerKey.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+                        threadValue['thread_name'] = workerKey
                         nval = {}
-                        for tkey, tvvv in tval.iteritems():
+                        for tkey, tval in threadValue.iteritems():
                             tkey = tkey.lower().replace(" ", "_").replace("/", "_")
-                            nval[tkey] = tvvv
+                            nval[tkey] = tval
                         wdata.append(nval)
                     data["cherrypy_server_worker_threads"] = wdata
                 else:
-                    nkey = 'cherrypy_http_server_%s' % kkk
+                    nkey = 'cherrypy_http_server_%s' % cpnKey
                     nkey = nkey.lower().replace(" ", "_").replace("/", "_")
-                    data[nkey] = vvv
+                    data[nkey] = cpnVal
     return data
 
 
 class MetricsServer(object):
     """
-    Example of metrics server which can server cherrypy metrics
+    Example of metrics server which can serve cherrypy metrics
     in Prometheus format
     """
     def metrics(self):
@@ -296,8 +295,7 @@ def TestMetricsServer():
                             'server.thread_pool': 20,
                             'environment': 'production',
                             'log.screen': True,
-                            'log.error_file': "crab.log",
-                           })
+                            'log.error_file': "crab.log"})
     conf = {'/': {'tools.staticdir.root': os.getcwd()}}
     cherrypy.quickstart(MetricsServer(), '/', config=conf)
 
