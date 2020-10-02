@@ -42,10 +42,10 @@ class CPMetricsTests(unittest.TestCase):
         """
         Test the flattenStats function
         """
-        data = promMetrics('test')
+        data = promMetrics(self.testData, 'test')
         self.assertEqual("# HELP" in data, True)
         self.assertEqual("# TYPE" in data, True)
-        self.assertEqual("test_cherrypy_app_bytes_written_second" in data, True)
+        self.assertEqual("test_cherrypy_app_bytes_read_request" in data, True)
         self.assertEqual("bla-bla" in data, False)
 
 if __name__ == '__main__':

@@ -15,6 +15,7 @@ from cherrypy.lib import cpstats
 from WMCore.REST.Error import *
 from WMCore.REST.Format import *
 from WMCore.REST.Validation import validate_no_more_input
+from Utils.CPMetrics import promMetrics
 
 try:
     from cherrypy.lib import httputil
@@ -357,9 +358,17 @@ class RESTFrontPage:
 
     @expose
     def stats(self):
-        "Return CherryPy stats dict about underlying service activities"
+        """
+        Return CherryPy stats dict about underlying service activities
+        """
         return cpstats.StatsPage().data()
 
+    @expose
+    def metrics(self):
+        """
+        Return CherryPy stats following the prometheus metrics structure
+        """
+        return promMetrics(cpstats.StatsPage().data(), self.app.appname)
 
 
 ######################################################################
@@ -698,8 +707,17 @@ class MiniRESTApi:
 
     @expose
     def stats(self):
-        "Return CherryPy stats dict about underlying service activities"
+        """
+        Return CherryPy stats dict about underlying service activities
+        """
         return cpstats.StatsPage().data()
+
+    @expose
+    def metrics(self):
+        """
+        Return CherryPy stats following the prometheus metrics structure
+        """
+        return promMetrics(cpstats.StatsPage().data(), self.app.appname)
 
     @expose
     def default(self, *args, **kwargs):

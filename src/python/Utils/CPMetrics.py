@@ -190,15 +190,11 @@ from __future__ import division
 import os
 import json
 
-import cherrypy
-from cherrypy.lib import cpstats
 
-
-def promMetrics(exporter_name):
+def promMetrics(data, exporter_name):
     """
     Provide cherrypy stats prometheus metrics for given exporter name.
     """
-    data = cpstats.StatsPage().data()
     metrics = flattenStats(data)
     if isinstance(metrics, str):
         metrics = json.loads(metrics)
@@ -270,34 +266,3 @@ def flattenStats(cpdata):
                     data[nkey] = cpnVal
     return data
 
-
-class MetricsServer(object):
-    """
-    Example of metrics server which can serve cherrypy metrics
-    in Prometheus format
-    """
-    def metrics(self):
-        "metrics end-point for prometheus to scrape"
-        pdata = promMetrics('test')
-        return pdata
-    metrics.exposed = True
-
-    def index(self):
-        "default index end-point"
-        return "Hello World"
-    index.exposed = True
-
-
-def TestMetricsServer():
-    "Test MetricsServer function"
-    cherrypy.root = MetricsServer()
-    cherrypy.config.update({'server.socket_port': 8080,
-                            'server.thread_pool': 20,
-                            'environment': 'production',
-                            'log.screen': True,
-                            'log.error_file': "crab.log"})
-    conf = {'/': {'tools.staticdir.root': os.getcwd()}}
-    cherrypy.quickstart(MetricsServer(), '/', config=conf)
-
-if __name__ == '__main__':
-    TestMetricsServer()
