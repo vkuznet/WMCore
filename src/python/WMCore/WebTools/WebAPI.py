@@ -4,6 +4,7 @@ from WMCore.WebTools.Page import exposedasplist, exposedasjson, exposedasxml
 from WMCore.WebTools.DatabasePage import DatabasePage
 from WMCore.Lexicon import sitetier, countrycode
 from cherrypy import expose, HTTPRedirect
+from Utils.CPMetrics import promMetrics
 import sys
 import types
 import traceback
@@ -45,6 +46,21 @@ class WebAPI(DatabasePage):
         """
         return {'application': self.config.application,
                 'version': self.__version__}
+
+    @expose
+    def stats(self):
+        """
+        Return CherryPy stats dict about underlying service activities
+        """
+        return cpstats.StatsPage().data()
+
+    @expose
+    def metrics(self):
+        """
+        Return CherryPy stats following the prometheus metrics structure
+        """
+        name = self.__class__.__name__
+        return promMetrics(cpstats.StatsPage().data(), name)
 
     @expose
     def index(self, **kwargs):
