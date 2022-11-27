@@ -5,6 +5,9 @@ on:
   push:
     tags:
       - '*.*.*'
+  workflow_dispatch:
+    tags:
+      - '*.*.*'
 
 jobs:
   build_and_publish_services:
