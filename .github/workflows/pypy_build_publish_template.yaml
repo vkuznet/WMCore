@@ -31,8 +31,15 @@ jobs:
           awk "/(${{ inputs.wmcore_component }}$)|(${{ inputs.wmcore_component }},)/ {print \$1}" requirements.wmcore.txt > requirements.txt
       - name: Build sdist
         run: python setup.py clean sdist
-      - name: Publish component
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.pypy_token }}
+      - name: Build image
+        run: |
+          curl -ksLO https://raw.githubusercontent.com/dmwm/CMSKubernetes/master/docker/pypi/${{inputs.wmcore_component}}/Dockerfile.dist
+          curl -ksLO https://raw.githubusercontent.com/dmwm/CMSKubernetes/master/docker/pypi/${{inputs.wmcore_component}}/run.sh
+          sed -i -e "s,ENV TAG=.*,ENV TAG=${{steps.get-ref.outputs.tag}},g" Dockerfile.dist
+          cat Dockerfile.dist
+          docker build . --tag registry.cern.ch/cmsweb/${{inputs.wmcore_components}}
+#       - name: Publish component
+#         uses: pypa/gh-action-pypi-publish@release/v1
+#         with:
+#           user: __token__
+#           password: ${{ secrets.pypy_token }}
