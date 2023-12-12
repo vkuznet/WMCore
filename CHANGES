@@ -1,3 +1,8 @@
+2.2.4.6 to 2.2.4.8:
+- Fix tag creation, the 2.2.4.7 was done manually via git tag command. Now we creating new tag
+via procedure described on https://github.com/dmwm/WMCore/wiki/TaggingAndReleasing
+
+
 2.2.4.6 to 2.2.4.7:
 - Backport PR#11810: ad-hoc fix for failed workflow in WQE creation
 
