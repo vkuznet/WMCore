@@ -1301,6 +1301,20 @@ class CouchMonitor(object):
                 msg = f"Replication from {source} to {target} for document {rid} is in a bad state: {error}; "
                 msg += f"History: {history}"
                 return {'status': 'error', 'error_message': msg}
+
+        # if our replication is fine we should check that it is not in a stale phase
+        activeTasks = self.getActiveTasks()
+        activeTasks = [task for task in activeTasks if task["type"].lower() == "replication"]
+        resp = self.checkReplicationState()
+        for replTask in activeTasks:
+            if not self.isReplicationStale(replTask):
+                source = sanitizeURL(replTask['source'])['url']
+                target = sanitizeURL(replTask['target'])['url']
+                msg = f"Replication from {source} to {target} is stale and it's last"
+                msg += f"update time was at: {replTask.get('updated_on')}"
+                resp['status'] = 'error'
+                resp['error_message'] += msg
+                return resp
         return status
 
     def checkCouchReplications(self, replicationsList):
@@ -1376,3 +1390,20 @@ class CouchMonitor(object):
             # then it has been recently updated
             return True
         return False
+
+    def isReplicationStale(self, replInfo, niter=10):
+        """
+        Ensure that the replication document is up-to-date as a
+        function of the checkpoint interval.
+
+        :param replInfo: dictionary with the replication information
+        :param niter: number of iteration for checkpoint interval
+        :return: True if replication is working fine, otherwise False
+        """
+        maxUpdateInterval = replInfo['checkpoint_interval'] * niter
+        lastUpdate = replInfo["updated_on"]
+
+        if lastUpdate + maxUpdateInterval > int(time.time()):
+            # then it has been recently updated and it means replication is not stale
+            return False
+        return True
